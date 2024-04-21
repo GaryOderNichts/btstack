@@ -1283,6 +1283,11 @@ typedef uint8_t sm_key_t[16];
 #define L2CAP_EVENT_ECBM_INCOMING_CONNECTION               0x7fu
 
 /**
+ * @format
+ */
+#define L2CAP_EVENT_CONNECTION_RESPONSE                    0x80u
+
+/**
  * @format 11BH122222
  * @param status
  * @param address_type
