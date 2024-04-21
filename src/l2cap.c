@@ -3662,6 +3662,27 @@ static void l2cap_signaling_handler_dispatch(hci_con_handle_t handle, uint8_t * 
             }
             return;
 
+        // hack in a connection response handler for bluebomb
+        case CONNECTION_RESPONSE:
+            if (cmd_len >= 8){
+                uint16_t result = little_endian_read_16(command, L2CAP_SIGNALING_COMMAND_DATA_OFFSET+4);
+
+                uint8_t event[3];
+                event[0] = L2CAP_EVENT_CONNECTION_RESPONSE;
+                little_endian_store_16(event, 1, result);
+
+                // Uh not great, but we don't have a valid cid so let's just dispatch this to all channels for now
+                btstack_linked_list_iterator_init(&it, &l2cap_channels);
+                while (btstack_linked_list_iterator_has_next(&it)){
+                    l2cap_channel_t * channel = (l2cap_channel_t *) btstack_linked_list_iterator_next(&it);
+                    if (!l2cap_is_dynamic_channel_type(channel->channel_type)) continue;
+                    if (channel->con_handle != handle) continue;
+
+                    l2cap_dispatch_to_channel(channel, HCI_EVENT_PACKET, event, sizeof(event));
+                }
+            }
+            break;
+
 #ifdef ENABLE_L2CAP_ENHANCED_CREDIT_BASED_FLOW_CONTROL_MODE
         case L2CAP_CREDIT_BASED_CONNECTION_REQUEST:
         case L2CAP_CREDIT_BASED_CONNECTION_RESPONSE:
